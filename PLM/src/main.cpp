@@ -18,7 +18,7 @@
 
 const int Sensor1 = 12;// Sensor zur Packeterkennung auf Pin12
 //int Sensor1State =0;
-CheapStepper stepper (6,9,10,11); 
+CheapStepper stepper (6,9,10,11);
 enum States{waitingPosition, loadPosition, unloadPosition, loaded};
 States currState = waitingPosition;
 bool Sensor1State;
@@ -45,14 +45,14 @@ bool ReadSensor( int PinSensor){
 
 void loadPackage(){
 
-    stepper.setRpm(10); 
+    stepper.setRpm(10);
     stepper.moveDegrees (true, 3*360); // true wird wird deffiniert als Postion der Aufladerampe (links/rechts)
 
 }
 
 void unloadPackage(bool right){
 
-    stepper.setRpm(10); 
+    stepper.setRpm(10);
     stepper.moveDegrees (right, 3*360);
 }
 
@@ -118,17 +118,13 @@ void sendBLE(String msg) {
 
 
 
-
-
-
-
 // the setup function runs once when you press reset or power the board
 void setup() {
    Serial.begin(9600);
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(Sensor1,INPUT);
-  
+
 
   initBLE();
   ble.verbose(false);  // debug info is a little annoying after this point!
@@ -149,12 +145,12 @@ void loop() {
          else{
            sendBLE("you failed!!!!"); //Informationsaustausch mit Leitsystem über BLE: Ladung befindet sich nicht an Bord
            currState = waitingPosition;// Wechsel des State
-         }   
-          break; 
+         }
+          break;
         }
         case unloadPosition:{ // Roboter hat Bauteil geladen und ist bereit zum Entladen
           Serial.println("ready for unloading..."); // Serielle Kommunikation zu Debug zwecken
-          if (message=="unload right"){ //Informationsaustausch mit Leitsystem über BLE: Abladebefhl des Leitsystems, 
+          if (message=="unload right"){ //Informationsaustausch mit Leitsystem über BLE: Abladebefhl des Leitsystems,
           //Fallunterscheidung ob Packet links oder rechts abgeladen werden soll
           unloadPackage(true); // unloadPackage(true) lädt das Paket mit 3 vollen Umdrehungen nach rechts ab
             if (0==ReadSensor(Sensor1)){ // Sensor überprüft ob das Packet immer noch an Bord ist
@@ -174,7 +170,7 @@ void loop() {
             else{
               sendBLE("unloading failed");
             }
-          } 
+          }
           break;
         }
         case waitingPosition:{//Default State um den Load befehl ab zu warten
@@ -183,8 +179,6 @@ void loop() {
             currState = loadPosition; // Wechsel des State
           }
             break;
-        }       
-    }                  
+        }
+    }
 }
-
-
