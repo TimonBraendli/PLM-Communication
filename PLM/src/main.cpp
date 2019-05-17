@@ -4,6 +4,7 @@
 #include "Adafruit_BLE.h"
 #include "Adafruit_BluefruitLE_SPI.h"
 #include "Adafruit_BluefruitLE_UART.h"
+#include <wire.h>
 
 
 #include "BluefruitConfig.h"
@@ -24,7 +25,7 @@ States currState = waitingPosition;
 bool Sensor1State;
 String message;
 
-Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
+//Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
 
 bool ReadSensor( int PinSensor){
@@ -60,10 +61,10 @@ void error(const __FlashStringHelper*err) {
   Serial.println(err);
   while (1);
 }
-
+/*
 void initBLE() {
   Serial.println(F("Adafruit Bluefruit Command Mode Example"));
-  /* Initialise the module */
+  /* Initialise the module *//*
   Serial.print(F("Initialising the Bluefruit LE module: "));
 
   if ( !ble.begin(VERBOSE_MODE) )
@@ -74,18 +75,18 @@ void initBLE() {
 
   if ( FACTORYRESET_ENABLE )
   {
-    /* Perform a factory reset to make sure everything is in a known state */
+    /* Perform a factory reset to make sure everything is in a known state *//*
     Serial.println(F("Performing a factory reset: "));
     if ( ! ble.factoryReset() ){
       error(F("Couldn't factory reset"));
     }
   }
 
-  /* Disable command echo from Bluefruit */
+  /* Disable command echo from Bluefruit *//*
   ble.echo(false);
 
   Serial.println("Requesting Bluefruit info:");
-  /* Print Bluefruit information */
+  /* Print Bluefruit information *//*
   ble.info();
   ble.println("AT+GAPDEVNAME=Zahnfee"); //Name des Bluetooth Modul
 
@@ -116,7 +117,7 @@ void sendBLE(String msg) {
   }
 }
 
-
+*/
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -126,56 +127,56 @@ void setup() {
   pinMode(Sensor1,INPUT);
 
 
-  initBLE();
-  ble.verbose(false);  // debug info is a little annoying after this point!
+//  initBLE();
+  //ble.verbose(false);  // debug info is a little annoying after this point!
 }
 
 
 void loop() {
-  message =  listenBLE();
+  message =  Serial.read();//listenBLE();
     switch (currState)  //Statemachine
     {
         case loadPosition:{ // Roboter befindet sich an der Ladestation und soll aufladen
          Serial.println("loading..."); // Serielle Kommunikation zu Debug zwecken
           loadPackage();  // lässt den Stepper Motor 3 Umdrehungen machen, so dass das Paket in der Mitte der Führung zu liegen kommt
          if (1==ReadSensor(Sensor1)){ // Auslesen des Kontaktsensors( true wenn sich eine Ladung an Bord befindet)
-           sendBLE("package loaded"); //Informationsaustausch mit Leitsystem über BLE: Ladung befindet sich an Bord
+           Serial.write("pickupSuccess(1)");//sendBLE("package loaded"); //Informationsaustausch mit Leitsystem über BLE: Ladung befindet sich an Bord
            currState = unloadPosition;  // Wechsel des State
          }
          else{
-           sendBLE("you failed!!!!"); //Informationsaustausch mit Leitsystem über BLE: Ladung befindet sich nicht an Bord
+           Serial.write("pickupSuccess(0)");//sendBLE("you failed!!!!"); //Informationsaustausch mit Leitsystem über BLE: Ladung befindet sich nicht an Bord
            currState = waitingPosition;// Wechsel des State
          }
           break;
         }
         case unloadPosition:{ // Roboter hat Bauteil geladen und ist bereit zum Entladen
           Serial.println("ready for unloading..."); // Serielle Kommunikation zu Debug zwecken
-          if (message=="unload right"){ //Informationsaustausch mit Leitsystem über BLE: Abladebefhl des Leitsystems,
+          if (message=="drop(1)"){ //Informationsaustausch mit Leitsystem über BLE: Abladebefhl des Leitsystems,
           //Fallunterscheidung ob Packet links oder rechts abgeladen werden soll
           unloadPackage(true); // unloadPackage(true) lädt das Paket mit 3 vollen Umdrehungen nach rechts ab
             if (0==ReadSensor(Sensor1)){ // Sensor überprüft ob das Packet immer noch an Bord ist
-            sendBLE("package unloaded"); //Informationsaustausch mit Leitsystem über BLE: Packet wurde erfolgreich abgeladen
+            Serial.write("dropSucces(1)");//sendBLE("package unloaded"); //Informationsaustausch mit Leitsystem über BLE: Packet wurde erfolgreich abgeladen
             currState = waitingPosition; // Wechsel in den Wartezustand
             }
             else{
-              sendBLE("unloading failed"); //Informationsaustausch mit Leitsystem über BLE: Packet befindet sich noch immer auf der Führung
+              Serial.write("dropSucces(0)");//sendBLE("unloading failed"); //Informationsaustausch mit Leitsystem über BLE: Packet befindet sich noch immer auf der Führung
             }
           }
-          if (message=="unload left"){
+          if (message=="drop(0)"){
             unloadPackage(false);
             if (0==ReadSensor(Sensor1)){ //ReadSensor( int PinSensor)==0
-            sendBLE("package unloaded"); //Informationsaustausch mit Leitsystem
+            Serial.write("dropSucces(1)");//sendBLE("package unloaded"); //Informationsaustausch mit Leitsystem
             currState = waitingPosition; //Wechsel in den Wartezustand
             }
             else{
-              sendBLE("unloading failed");
+              Serial.write("dropSucces(0)");//sendBLE("unloading failed");
             }
           }
           break;
         }
         case waitingPosition:{//Default State um den Load befehl ab zu warten
           Serial.println("waiting...");
-          if (message=="load"){//Informationsaustausch mit Leitsystem über BLE: Packet soll geladen werden
+          if (message=="pickup(0)"||message=="pickup(1)"){//Informationsaustausch mit Leitsystem über BLE: Packet soll geladen werden
             currState = loadPosition; // Wechsel des State
           }
             break;
